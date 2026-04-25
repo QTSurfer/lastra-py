@@ -80,14 +80,17 @@ the descriptor is:
 |-------|------|-------|
 | `codec` | 1 byte | Codec ID |
 | `dataType` | 1 byte | DataType ID |
-| `flags` | 1 byte | Reserved / future use; readers MUST tolerate non-zero values |
-| `nameLen` | 2 bytes (uint16) | Length of the UTF-8 name |
+| `colFlags` | 1 byte | `0x02` set when metadata follows; other bits reserved |
+| `nameLen` | 1 byte (uint8) | Length of the UTF-8 name (max 255) |
 | `name` | `nameLen` bytes | UTF-8 column name |
-| `metaLen` | 4 bytes (uint32) | Length of the metadata blob (0 if none) |
-| `meta` | `metaLen` bytes | gzip-compressed JSON `Map<String,String>` |
+| `metaLen` | 2 bytes (uint16, LE) | Present only when `colFlags & 0x02`. Length of the JSON blob. |
+| `meta` | `metaLen` bytes | Present only when `colFlags & 0x02`. UTF-8 JSON object `{"k":"v",...}` (plain text, no compression). |
 
-The metadata blob is OPTIONAL — when `metaLen == 0`, the descriptor ends
-after `metaLen`.
+When `colFlags & 0x02 == 0` the descriptor ends after `name` — no
+`metaLen`/`meta` bytes are written. The reference Java JSON parser is
+deliberately minimal (`split(",")` + `split(":")`), so metadata keys and
+values must not contain `,`, `:`, or unescaped quotes — typically used
+for short tags like `{"unit":"celsius","sensor":"dht22"}`.
 
 ### Series data
 
@@ -199,10 +202,28 @@ Java reference in `PongoCodec` + `PongoEraser`.
 
 ### `VARLEN`, `VARLEN_ZSTD`, `VARLEN_GZIP` (BINARY)
 
-`VARLEN` is the base format: for each row, write `varint(length)` then
-`length` bytes. `VARLEN_ZSTD` and `VARLEN_GZIP` first concatenate the
-varlen-encoded bytes for the entire column, then run ZSTD or gzip over
-the result.
+The VARLEN family shares one byte-level layout. Each column blob starts
+with a 1-byte compression marker, followed by an optional uncompressed
+length, then the payload (compressed when the marker selects ZSTD/GZIP).
+
+```
+[1 byte]  compression marker (0=NONE, 1=ZSTD, 2=GZIP)
+NONE:
+  [int32 LE] payloadLength
+  [payload bytes]
+ZSTD / GZIP:
+  [int32 LE] uncompressedLength
+  [int32 LE] compressedLength
+  [compressed bytes]
+```
+
+The decoded payload is a flat sequence of per-row records:
+
+```
+per row i in [0, count):
+  [int32 LE] length         # -1 means NULL
+  [length bytes] data       # absent when length == -1
+```
 
 `VARLEN_GZIP` exists specifically so browsers can decompress with
 `DecompressionStream("gzip")` without polyfills — used for metadata and

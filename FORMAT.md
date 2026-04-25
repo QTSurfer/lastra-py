@@ -64,12 +64,12 @@ All multi-byte integers and floats are **little-endian**.
 | Offset | Size | Field |
 |-------:|-----:|-------|
 | 0  | 4 | `MAGIC` (`0x4C415354`) |
-| 4  | 1 | `version` (currently 1) |
-| 5  | 1 | `flags` (bitmask of `FLAG_*`) |
-| 6  | 4 | `seriesRowCount` (uint32 logical) — number of rows in the series section |
-| 10 | 4 | `seriesColCount` (uint32) — number of series columns |
-| 14 | 4 | `eventsRowCount` (uint32) |
-| 18 | 4 | `eventsColCount` (uint32) |
+| 4  | 2 | `version` (uint16; currently 1) |
+| 6  | 2 | `flags` (uint16 bitmask of `FLAG_*`) |
+| 8  | 4 | `seriesRowCount` (uint32) — rows in the series section |
+| 12 | 4 | `seriesColCount` (uint32) — number of series columns |
+| 16 | 4 | `eventsRowCount` (uint32) |
+| 20 | 2 | `eventsColCount` (uint16) |
 
 ### Column descriptors
 
@@ -130,6 +130,12 @@ row groups are in use:
 | `eventOffsets` | `eventsColCount * 8` bytes | when `FLAG_HAS_EVENTS` |
 | `eventCrc32` | `eventsColCount * 4` bytes | when both `FLAG_HAS_EVENTS` and `FLAG_HAS_CHECKSUMS` |
 | `FOOTER_MAGIC` | 4 bytes | `0x4C415321` |
+| `footerSize` | 4 bytes (uint32 LE) | Size of the footer body, excluding this trailer |
+
+The trailing `FOOTER_MAGIC` + `footerSize` pair forms an 8-byte trailer
+that lets HTTP-Range readers fetch the last 8 bytes, locate the footer,
+and pull row-group statistics with one extra request before retrieving
+any data.
 
 #### With row groups
 
@@ -141,6 +147,7 @@ row groups are in use:
 | `eventOffsets` | `eventsColCount * 8` bytes | when `FLAG_HAS_EVENTS` |
 | `eventCrc32` | `eventsColCount * 4` bytes | when `HAS_EVENTS` && `HAS_CHECKSUMS` |
 | `FOOTER_MAGIC` | 4 bytes | `0x4C415321` |
+| `footerSize` | 4 bytes (uint32 LE) | same trailer hint as the no-row-groups variant |
 
 Row groups enable two things readers should support:
 

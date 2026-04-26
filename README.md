@@ -17,7 +17,7 @@
 
 ## Status
 
-`0.8.0` — first published release, aligned with `lastra-java` 0.8.0. Reader and writer are feature-complete; the wire-format spec lives in [FORMAT.md](https://github.com/QTSurfer/lastra-py/blob/main/FORMAT.md).
+Reader and writer feature-complete, aligned with [`lastra-java`](https://github.com/QTSurfer/lastra-java). Wire-format spec lives in [FORMAT.md](https://github.com/QTSurfer/lastra-py/blob/main/FORMAT.md). See the PyPI badge above for the latest version.
 
 ## Install
 

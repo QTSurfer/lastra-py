@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="logo.svg" alt="Lastra" width="420">
+  <img src="https://raw.githubusercontent.com/QTSurfer/lastra-py/main/logo.svg" alt="Lastra" width="420">
 </p>
 
 <p align="center">
   <a href="https://github.com/QTSurfer/lastra-py/actions/workflows/ci.yml"><img src="https://github.com/QTSurfer/lastra-py/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pypi.org/project/lastra/"><img src="https://img.shields.io/pypi/v/lastra" alt="PyPI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+  <a href="https://github.com/QTSurfer/lastra-py/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
 </p>
 
 <p align="center">
@@ -17,35 +17,33 @@
 
 ## Status
 
-🚧 **Pre-release** — repository scaffold while we port the format from Java. The first published release will be `0.8.0` to align with `lastra-java`.
+`0.8.0` — first published release, aligned with `lastra-java` 0.8.0. Reader and writer are feature-complete; the wire-format spec lives in [FORMAT.md](https://github.com/QTSurfer/lastra-py/blob/main/FORMAT.md).
 
-The wire-format spec lives in [FORMAT.md](FORMAT.md). Same semantics as `lastra-java` v0.8.0.
-
-## Install (planned)
+## Install
 
 ```bash
 pip install lastra
 ```
 
-## Usage (planned API)
+## Usage
 
 ```python
 from lastra import LastraReader
 
 with open("ohlcv.lastra", "rb") as f:
-    r = LastraReader(f)
+    r = LastraReader.from_stream(f)
 
     # Read only what you need — other columns are not decompressed
-    ts = r.read_series("ts")           # numpy int64 array
-    close = r.read_series("close")     # numpy float64 array
+    ts = r.read_series_long("ts")        # numpy int64 array
+    close = r.read_series_double("close") # numpy float64 array
 
     # Column metadata
-    meta = r.series_column("ema1").metadata
+    meta = r.get_series_column("ema1").metadata
     # {"indicator": "ema", "periods": "10"}
 
     # Events (independent timestamps)
-    sig_ts = r.read_event("ts")
-    sig_data = r.read_event("data")    # list[bytes]
+    sig_ts = r.read_event_long("ts")
+    sig_data = r.read_event_binary("data")  # list[bytes | None]
 ```
 
 Pandas / Polars / Arrow adapters (planned for 0.9):
@@ -86,4 +84,4 @@ See [QTSurfer/lastra-convert-py](https://github.com/QTSurfer/lastra-convert-py) 
 
 ## License
 
-Copyright 2026 Wualabs LTD. Apache License 2.0 — see [LICENSE](LICENSE).
+Copyright 2026 Wualabs LTD. Apache License 2.0 — see [LICENSE](https://github.com/QTSurfer/lastra-py/blob/main/LICENSE).

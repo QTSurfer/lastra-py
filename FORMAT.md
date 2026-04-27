@@ -1,9 +1,10 @@
 # Lastra File Format Specification
 
-Version 1 — extracted from `lastra-java` v0.8.0 reference implementation.
-This document is the canonical wire-format reference for any Lastra reader
-or writer (Java, TypeScript, Python). It will live in `lastra-py` once the
-repo is created.
+Wire format version `1`. Canonical reference for any Lastra reader or
+writer (Java, TypeScript, Python). The three reference implementations
+listed at the bottom of this document all match this spec byte for byte;
+the `lastra-py` reader and writer are validated against `lastra-java`
+through a shared corpus of fixtures.
 
 ## Constants
 
@@ -253,6 +254,6 @@ guarantee.
 
 | Language | Repo | Status |
 |----------|------|--------|
-| Java | [QTSurfer/lastra-java](https://github.com/QTSurfer/lastra-java) | Reference (v0.8.0) |
+| Java | [QTSurfer/lastra-java](https://github.com/QTSurfer/lastra-java) | Reader + writer (canonical reference) |
 | TypeScript | [QTSurfer/lastra-ts](https://github.com/QTSurfer/lastra-ts) | Reader feature-complete |
-| Python | [QTSurfer/lastra-py](https://github.com/QTSurfer/lastra-py) | Planned |
+| Python | [QTSurfer/lastra-py](https://github.com/QTSurfer/lastra-py) | Reader + writer feature-complete |

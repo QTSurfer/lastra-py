@@ -24,7 +24,7 @@ from typing import Any
 import numpy as np
 import polars as pl
 
-from ..format import Codec, DataType
+from ..format import DataType
 from ..reader import LastraReader
 from ..writer import LastraWriter
 from ._common import CodecOverride, resolve_codec

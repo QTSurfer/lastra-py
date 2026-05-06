@@ -21,12 +21,11 @@ unit-agnostic.)
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
-from ..format import Codec, DataType
+from ..format import DataType
 from ..reader import LastraReader
 from ..writer import LastraWriter
 from ._common import CodecOverride, resolve_codec

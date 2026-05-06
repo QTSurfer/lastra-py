@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import zlib
 from dataclasses import dataclass
-from io import BytesIO
 from typing import BinaryIO
 
 import numpy as np
@@ -18,7 +17,7 @@ import numpy as np
 from . import _descriptor as _desc
 from . import format as _format
 from .codecs import alp, delta_varint, gorilla, pongo, raw, varlen
-from .format import Codec, ColumnDescriptor, DataType, FOOTER_MAGIC, Header, parse_header
+from .format import Codec, ColumnDescriptor, FOOTER_MAGIC, Header, parse_header
 
 _TRAILER_SIZE = 8  # FOOTER_MAGIC (4) + footerSize (4)
 
@@ -294,10 +293,14 @@ class LastraReader:
         fp += 4
 
         for _ in range(rg_count):
-            rg_offset = int.from_bytes(data[fp : fp + 4], "little", signed=False); fp += 4
-            rg_rows = int.from_bytes(data[fp : fp + 4], "little", signed=False); fp += 4
-            ts_min = int.from_bytes(data[fp : fp + 8], "little", signed=True); fp += 8
-            ts_max = int.from_bytes(data[fp : fp + 8], "little", signed=True); fp += 8
+            rg_offset = int.from_bytes(data[fp : fp + 4], "little", signed=False)
+            fp += 4
+            rg_rows = int.from_bytes(data[fp : fp + 4], "little", signed=False)
+            fp += 4
+            ts_min = int.from_bytes(data[fp : fp + 8], "little", signed=True)
+            fp += 8
+            ts_max = int.from_bytes(data[fp : fp + 8], "little", signed=True)
+            fp += 8
             self._row_groups.append(
                 RowGroupStats(row_count=rg_rows, byte_offset=rg_offset, ts_min=ts_min, ts_max=ts_max)
             )

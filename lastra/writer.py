@@ -123,7 +123,10 @@ class LastraWriter:
                 f"writeSeries got {len(column_data)} arrays but {len(self._series_columns)} "
                 f"series columns are registered"
             )
-        self._series_row_count = row_count
+        # Accumulate across calls — each invocation appends rows to the same
+        # series rather than replacing it. The footer's series_row_count must
+        # reflect the total written across every write_series() call.
+        self._series_row_count += row_count
 
         for start in range(0, row_count, self._row_group_size):
             end = min(start + self._row_group_size, row_count)

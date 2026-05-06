@@ -151,6 +151,74 @@ def test_row_groups_multi_rg_full_and_partial_reads() -> None:
     )
 
 
+# --- Multiple write_series() calls accumulate (regression for 0.8.3) -----
+
+def test_multiple_write_series_calls_accumulate() -> None:
+    """Streaming-append: K calls of ``write_series(rg_size, ...)``, each call
+    carrying the next chunk of the series. Mirrors lastra-java 0.8.2's
+    ``testMultipleWriteSeriesCallsAccumulate`` and lastra-ts's
+    ``Multiple writeSeries() calls`` suite.
+
+    Pre-0.8.3 the writer assigned ``self._series_row_count = row_count`` on
+    every call, so the footer recorded only the last call's count and full
+    reads via :meth:`LastraReader.read_series_long` raised
+    ``ValueError: could not broadcast input array from shape (X,) into shape
+    (Y,)`` because the result buffer was sized from the under-count while
+    per-RG slices fed it the full data.
+
+    Single-call usage (already covered by
+    :func:`test_row_groups_multi_rg_full_and_partial_reads`) is unaffected
+    — the field starts at 0 and one call adds its row_count, total equals
+    row_count. Per-RG reads (``read_row_group_long`` / ``row_group_stats``)
+    were already correct — only the aggregate ``series_row_count`` was
+    wrong.
+    """
+    rg_size = 100
+    rg_count = 4
+    t0 = 1_700_000_000_000
+    hour_ms = 3_600_000
+
+    w = LastraWriter(row_group_size=rg_size)
+    w.add_series_column("ts", DataType.LONG, Codec.DELTA_VARINT)
+    w.add_series_column("v", DataType.DOUBLE, Codec.ALP)
+    for g in range(rg_count):
+        ts = np.array([t0 + g * hour_ms + i for i in range(rg_size)], dtype=np.int64)
+        v = np.array([100.0 + g + i * 0.01 for i in range(rg_size)])
+        w.write_series(rg_size, ts, v)
+
+    r = LastraReader.from_bytes(w.to_bytes())
+    total_rows = rg_count * rg_size
+
+    assert r.row_group_count == rg_count
+    assert r.series_row_count == total_rows, (
+        "series_row_count must be the SUM across write_series() calls"
+    )
+
+    # Per-RG stats: each call produces one RG with its own time bounds.
+    for g, s in enumerate(r.row_group_stats):
+        assert s.row_count == rg_size
+        assert s.ts_min == t0 + g * hour_ms
+        assert s.ts_max == t0 + g * hour_ms + (rg_size - 1)
+
+    # Whole-series read returns all rows from all RGs in chronological order.
+    ts_all = r.read_series_long("ts")
+    v_all = r.read_series_double("v")
+    assert ts_all.size == total_rows
+    assert v_all.size == total_rows
+    assert ts_all[0] == t0
+    assert ts_all[rg_size] == t0 + hour_ms  # first ts of RG #2
+    assert ts_all[total_rows - 1] == t0 + (rg_count - 1) * hour_ms + (rg_size - 1)
+    np.testing.assert_allclose(v_all[0], 100.0)
+    np.testing.assert_allclose(
+        v_all[total_rows - 1], 100.0 + (rg_count - 1) + (rg_size - 1) * 0.01
+    )
+
+    # Per-RG read returns exactly that RG's slice.
+    rg2_ts = r.read_row_group_long(2, "ts")
+    assert rg2_ts.size == rg_size
+    assert rg2_ts[0] == t0 + 2 * hour_ms
+
+
 # --- Series + events + metadata ------------------------------------------
 
 def test_series_events_and_metadata_roundtrip() -> None:

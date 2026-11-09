@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lastra"
-version = "0.8.3"
+version = "0.8.4"
 description = "Python reader/writer for the Lastra columnar time series format. Bit-exact compatible with QTSurfer/lastra-java + lastra-ts."
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -23,7 +23,7 @@ classifiers = [
     "Topic :: System :: Archiving :: Compression",
 ]
 dependencies = [
-    "alp-codec>=0.8",
+    "alp-codec>=0.8.3",
     "numpy>=1.26",
     "zstandard>=0.22",
 ]

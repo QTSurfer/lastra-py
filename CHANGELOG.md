@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-11-09
+
+### 🔴 Fixed
+
+- The dependency floor is now `alp-codec>=0.8.3` (was `>=0.8`). `alp-codec` 0.8.0,
+  0.8.1 and 0.8.2 decode some ALP vectors **wrongly and without any error**: when
+  the frame-of-reference deltas of a vector need more than 56 bits (typical for
+  prices that went through float32, which carry many decimal places), the group
+  fast path of `unpack` read a fixed 8-byte window and lost the high bits, so
+  `read_series_double` returned plausible-looking numbers that were not the ones
+  written. `alp-codec` 0.8.3 fixes it. The files themselves are correct; only the
+  Python read differs.
+- `lastra.__version__` now reads the installed package metadata. In 0.8.3 it still
+  said `"0.8.2"`.
+
+### ⚠️ Action needed if you already have `alp-codec` installed
+
+`pip install -U lastra` does **not** upgrade a dependency that is already
+satisfied, so an environment that holds `alp-codec` 0.8.0-0.8.2 keeps it and keeps
+reading wrongly after updating `lastra`. Update it explicitly:
+
+```
+pip install -U "alp-codec>=0.8.3"
+```
+
+A clean `pip install lastra` resolves to a good version.
+
+### Added
+
+- Regression test with a 256-row file written by the reference Java encoder whose
+  `close` column needs wide bit widths; it reads exactly with `alp-codec>=0.8.3` and
+  fails with 0.8.0-0.8.2.
+
 ## [0.8.3] - 2026-05-06
 
 ### 🔴 Fixed
